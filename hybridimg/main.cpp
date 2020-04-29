@@ -18,10 +18,8 @@ using namespace cv;
 
 void m_fft(string filename, Mat &dst) {
     Mat I = imread(filename, IMREAD_GRAYSCALE);
-    if (I.empty()) {
-        cout << "could not load image...%d\n" << endl;
-        return ;
-    }
+    if (I.empty()) { cout<<"img error! "<<endl; return ; }
+
     Mat padded;                            //expand input image to optimal size
     int m = getOptimalDFTSize(I.rows);
     int n = getOptimalDFTSize(I.cols); // on the border add zero values
@@ -71,30 +69,37 @@ void m_fft(string filename, Mat &dst) {
 int main(int argc, const char * argv[]) {
     Mat src1, src2, dst1, dst2, src2_gray, dst;
     int sigma = 17;
-    int ksize = (sigma*5)|1;
+    int ksize = sigma*3;
     char window_name[] = "hybridImg";
-    src1 = imread("/Users/renlei/XcodeSpace/hybridimg/that2y.jpg", IMREAD_COLOR);
+    src1 = imread("imgs/that2y.jpg", IMREAD_COLOR);
     if (src1.empty()) {
-        cout << "could not load image1...%d\n" << endl;
+        cout<<"img1 error! "<<endl;
         return -1;
     }
-    src2 = imread("/Users/renlei/XcodeSpace/hybridimg/thaty.jpg", IMREAD_COLOR);
+    src2 = imread("imgs/thaty.jpg", IMREAD_COLOR);
     if (src2.empty()) {
-        cout << "could not load image2...%d\n" << endl;
+        cout<<"img2 error! " << endl;
         return -1;
     }
     GaussianBlur(src1, dst1, Size(ksize, ksize), sigma, sigma);
     imshow("Gaussian", dst1);
-    imwrite("/Users/renlei/XcodeSpace/hybridimg/imgs/Gaussian.jpg", dst1);
+    imwrite("outImgs/Gaussian.jpg", dst1);
 
     Mat tmp;
     GaussianBlur(src2, tmp, Size(ksize, ksize), sigma, sigma);
     // imshow("tmp", tmp);
+
     dst2 = src2 - tmp;
     // absdiff(src2, tmp, dst2);
-    imshow("1-Gaussian", dst2);
-    imwrite("/Users/renlei/XcodeSpace/hybridimg/imgs/1-Gaussian.jpg", dst2);
-    
+    imshow("antiGaussian", dst2);
+    imwrite("outImgs/antiGaussian.jpg", dst2);
+
+    Mat fft1, fft2;
+    m_fft("outImgs/Gaussian.jpg", fft1);
+    imshow("fft1", fft1);
+    m_fft("outImgs/antiGaussian.jpg", fft2);
+    imshow("fft2", fft2);
+
 //    Mat tp;
 //    Laplacian(tmp, tp, CV_16S, 5);
 //    convertScaleAbs(tp, dst2, 1);
@@ -120,44 +125,40 @@ int main(int argc, const char * argv[]) {
 //            }
 //        }
 //    }
-    
+
     resize(dst2, dst2, Size(dst1.cols, dst1.rows));
-    
+
     dst = dst1 + dst2;
     // imshow("tmp", dst);
     dst.convertTo(dst, -1, 0.8, 0);  // 对比度、亮度修饰
     imshow(window_name, dst);
-    imwrite("/Users/renlei/XcodeSpace/hybridimg/imgs/hybrid.jpg", dst);
+    imwrite("outImgs/hybrid.jpg", dst);
 //    double alpha = 0.4;  // 图像的线性混合按照不同的权重进行混合dst1权重0.5，dst2权重0.5
 //    addWeighted(dst1, alpha, dst2, (1-alpha), 3, dst);  // 图像混合API,权重相加
 //    imshow(window_name, dst);
-    Mat pyup, pydn;
-    pyrUp(dst, pyup, Size(dst.cols*2, dst.rows*2));
-    imshow("pyup1", pyup);
-    imwrite("/Users/renlei/XcodeSpace/hybridimg/imgs/pyup1.jpg", pyup);
-    pyrUp(pyup, pyup, Size(pyup.cols*2, pyup.rows*2));
-    imshow("pyup2", pyup);
-    imwrite("/Users/renlei/XcodeSpace/hybridimg/imgs/pyup2.jpg", pyup);
-    pyrUp(pyup, pyup, Size(pyup.cols*2, pyup.rows*2));
-    imshow("pyup3", pyup);
-    imwrite("/Users/renlei/XcodeSpace/hybridimg/imgs/pyup3.jpg", pyup);
+    
+//    Mat pyup;
+    Mat pydn;
+//    pyrUp(dst, pyup, Size(dst.cols*2, dst.rows*2));
+//    imshow("pyup1", pyup);
+//    imwrite("outImgs/pyup1.jpg", pyup);
+//    pyrUp(pyup, pyup, Size(pyup.cols*2, pyup.rows*2));
+//    imshow("pyup2", pyup);
+//    imwrite("outImgs/pyup2.jpg", pyup);
+//    pyrUp(pyup, pyup, Size(pyup.cols*2, pyup.rows*2));
+//    imshow("pyup3", pyup);
+//    imwrite("outImgs/pyup3.jpg", pyup);
     pyrDown(dst, pydn, Size(dst.cols/2, dst.rows/2));
     imshow("pydn1", pydn);
-    imwrite("/Users/renlei/XcodeSpace/hybridimg/imgs/pydn1.jpg", pydn);
+    imwrite("outImgs/pydn1.jpg", pydn);
     pyrDown(pydn, pydn, Size(pydn.cols/2, pydn.rows/2));
     imshow("pydn2", pydn);
-    imwrite("/Users/renlei/XcodeSpace/hybridimg/imgs/pydn2.jpg", pydn);
+    imwrite("outImgs/pydn2.jpg", pydn);
     pyrDown(pydn, pydn, Size(pydn.cols/2, pydn.rows/2));
     imshow("pydn3", pydn);
-    imwrite("/Users/renlei/XcodeSpace/hybridimg/imgs/pydn3.jpg", pydn);
+    imwrite("outImgs/pydn3.jpg", pydn);
 
-    Mat fft1, fft2;
-    m_fft("/Users/renlei/XcodeSpace/hybridimg/imgs/Gaussian.jpg", fft1);
-    imshow("fft1", fft1);
-    m_fft("/Users/renlei/XcodeSpace/hybridimg/imgs/1-Gaussian.jpg", fft2);
-    imshow("fft2", fft2);
-    
     waitKey(0);
-     
+
     return 0;
 }
